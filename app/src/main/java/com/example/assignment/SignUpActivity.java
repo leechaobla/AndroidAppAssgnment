@@ -1,23 +1,39 @@
 package com.example.assignment;
-import android.content.Intent;
+
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.content.Intent;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class SignUpActivity extends AppCompatActivity {
 
     private EditText usernameEditText, emailEditText, passwordEditText, confirmPasswordEditText;
     private Button signUpButton;
     private TextView loginTextView;
+    private FirebaseFirestore db;
+    private FirebaseAuth mAuth; // Declare FirebaseAuth instance
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_signup);
+
+        // Initialize Firebase Auth and Firestore
+        mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
 
         usernameEditText = findViewById(R.id.usernameEditText);
         emailEditText = findViewById(R.id.emailEditText);
@@ -36,7 +52,18 @@ public class SignUpActivity extends AppCompatActivity {
 
                 if (!username.isEmpty() && !email.isEmpty() && !password.isEmpty() && !confirmPassword.isEmpty()) {
                     if (password.equals(confirmPassword)) {
-                        // Handle sign-up logic (Firebase Auth, for example)
+                        // Sign up the user with Firebase Authentication
+                        mAuth.createUserWithEmailAndPassword(email, password)
+                                .addOnCompleteListener(SignUpActivity.this, task -> {
+                                    if (task.isSuccessful()) {
+                                        // Sign-up successful, save user data to Firestore
+                                        FirebaseUser user = mAuth.getCurrentUser();
+                                        saveUserToFirestore(user, username, email);
+                                    } else {
+                                        // If sign up fails, display a message to the user.
+                                        Toast.makeText(SignUpActivity.this, "Authentication Failed.", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
                     } else {
                         Toast.makeText(SignUpActivity.this, "Passwords do not match", Toast.LENGTH_SHORT).show();
                     }
@@ -54,4 +81,26 @@ public class SignUpActivity extends AppCompatActivity {
             }
         });
     }
+    private void saveUserToFirestore(FirebaseUser firebaseUser, String username, String email) {
+        // Create a user map to store in Firestore
+        Map<String, Object> user = new HashMap<>();
+        user.put("uid", firebaseUser.getUid());
+        user.put("username", username);
+        user.put("email", email);
+
+        // Save to Firestore under the "users" collection
+        db.collection("users")
+                .document(firebaseUser.getUid())
+                .set(user)
+                .addOnSuccessListener(aVoid -> {
+                    // Success, redirect to main activity or display a message
+                    Toast.makeText(SignUpActivity.this, "Registration successful!", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    // Failure, display a message
+                    Toast.makeText(SignUpActivity.this, "Failed to save user data.", Toast.LENGTH_SHORT).show();
+                });
+
+    }
 }
+
