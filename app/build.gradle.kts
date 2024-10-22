@@ -44,6 +44,7 @@ dependencies {
     // Firebase platform BOM (Bill of Materials)
     implementation(platform(libs.firebase.bom))
 
+
     // Firebase Authentication
     implementation(libs.firebase.auth.ktx)
     implementation(libs.firebase.auth)

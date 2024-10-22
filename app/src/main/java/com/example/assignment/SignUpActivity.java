@@ -1,6 +1,7 @@
 package com.example.assignment;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -14,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.FirebaseApp;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,10 +32,13 @@ public class SignUpActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_signup);
+        FirebaseApp.initializeApp(this);
 
         // Initialize Firebase Auth and Firestore
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
+        FirebaseFirestore.setLoggingEnabled(true);
+
 
         usernameEditText = findViewById(R.id.usernameEditText);
         emailEditText = findViewById(R.id.emailEditText);
@@ -93,14 +98,16 @@ public class SignUpActivity extends AppCompatActivity {
                 .document(firebaseUser.getUid())
                 .set(user)
                 .addOnSuccessListener(aVoid -> {
-                    // Success, redirect to main activity or display a message
+                    // Success, display a success message or navigate to another activity
                     Toast.makeText(SignUpActivity.this, "Registration successful!", Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(e -> {
-                    // Failure, display a message
-                    Toast.makeText(SignUpActivity.this, "Failed to save user data.", Toast.LENGTH_SHORT).show();
+                    // Failure, display a message and log the error details
+                    Toast.makeText(SignUpActivity.this, "Failed to save user data: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Log.e("FirestoreError", "Error saving user data", e);
                 });
+    }
 
     }
-}
+
 

@@ -8,18 +8,22 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.assignment.R;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class LoginActivity extends AppCompatActivity {
 
     private EditText emailEditText, passwordEditText;
     private Button loginButton;
     private TextView signUpTextView;
+    private FirebaseAuth mAuth; // Declare FirebaseAuth instance
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
+        mAuth = FirebaseAuth.getInstance();
 
         emailEditText = findViewById(R.id.emailEditText);
         passwordEditText = findViewById(R.id.passwordEditText);
@@ -33,7 +37,21 @@ public class LoginActivity extends AppCompatActivity {
                 String password = passwordEditText.getText().toString();
 
                 if (!email.isEmpty() && !password.isEmpty()) {
-                    // Handle authentication logic (Firebase Auth, for example)
+                    // Sign in the user with Firebase Authentication
+                    mAuth.signInWithEmailAndPassword(email, password)
+                            .addOnCompleteListener(LoginActivity.this, task -> {
+                                if (task.isSuccessful()) {
+                                    // Sign-in success, redirect to main activity
+                                    FirebaseUser user = mAuth.getCurrentUser();
+                                    Intent intent = new Intent(LoginActivity.this, Welcome.class); // Replace MainActivity with your target activity
+                                    startActivity(intent);
+                                    finish(); // Close the LoginActivity
+                                } else {
+                                    // If sign in fails, display a message to the user
+                                    String errorMessage = task.getException() != null ? task.getException().getMessage() : "Login Failed";
+                                    Toast.makeText(LoginActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
+                                }
+                            });
                 } else {
                     Toast.makeText(LoginActivity.this, "Please fill in all fields", Toast.LENGTH_SHORT).show();
                 }
